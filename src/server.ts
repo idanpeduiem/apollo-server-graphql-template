@@ -2,7 +2,7 @@ import { ApolloServer } from "@apollo/server";
 import express from "express";
 import http from "http";
 import { getSchema } from "./graphql/schema/schema";
-// import {ApolloServerPluginDrainHttpServer} from "@apollo/server/dist/esm/plugin/drainHttpServer";
+import {ApolloServerPluginDrainHttpServer} from "@apollo/server/plugin/drainHttpServer";
 import { expressMiddleware } from '@apollo/server/express4';
 import cors from 'cors';
 import {json} from 'body-parser';
@@ -15,7 +15,7 @@ import {json} from 'body-parser';
 
   const server = new ApolloServer({
     schema,
-    // plugins: [ApolloServerPluginDrainHttpServer({httpServer})]
+    plugins: [ApolloServerPluginDrainHttpServer({httpServer})]
   });
 
   await server.start();
@@ -23,7 +23,13 @@ import {json} from 'body-parser';
   app.use(
       cors(),
       json(),
-      expressMiddleware(server),
+      expressMiddleware(server, {
+        context: async ({req}) => {
+          console.info(`Got UserAction: ${req.body.operationName}`);
+          console.info(`req: ${req}`);
+          return {};
+        }
+      }),
   );
 
   await new Promise((resolve) => {
